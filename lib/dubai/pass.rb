@@ -43,9 +43,10 @@ XnMuLyV1FQ==
 
       TYPES = ['boarding-pass', 'coupon', 'event-ticket', 'store-card', 'generic']
 
-      def initialize(directory)
+      def initialize(directory, data={})
         @assets = Dir[File.join(directory, '*')]
-        @pass = File.read(@assets.delete(@assets.detect{|file| File.basename(file) == 'pass.json'}))
+        pass = JSON.parse(File.read(@assets.delete(@assets.detect{|file| File.basename(file) == 'pass.json'})))
+        @pass = json_merge(pass, data)
       end
 
       def manifest
@@ -90,6 +91,19 @@ XnMuLyV1FQ==
 
       def wwdr
         OpenSSL::X509::Certificate.new(WWDR_CERTIFICATE)
+      end
+
+      def json_merge(h1, h2)
+        remerge = proc do |key, v1, v2| 
+          if v1.is_a?(Hash) && v2.is_a?(Hash)
+            v1.merge(v2, &remerge)
+          elsif v1.is_a?(Array) && v2.is_a?(Array)
+            v1.each_with_index { |item, i| item.merge!( v2[i] || {} ) }
+          else
+            v2
+          end
+        end
+        h1.merge(h2, &remerge).to_json
       end
     end
   end
