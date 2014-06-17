@@ -44,7 +44,7 @@ XnMuLyV1FQ==
       TYPES = ['boarding-pass', 'coupon', 'event-ticket', 'store-card', 'generic']
 
       def initialize(directory, data={})
-        @assets = Dir[File.join(directory, '*')]
+        @assets = get_pass_assets(directory)
         pass = JSON.parse(File.read(@assets.delete(@assets.detect{|file| File.basename(file) == 'pass.json'})))
         @pass = json_merge(pass, data)
       end
@@ -91,6 +91,13 @@ XnMuLyV1FQ==
 
       def wwdr
         OpenSSL::X509::Certificate.new(WWDR_CERTIFICATE)
+      end
+
+      def get_pass_assets(directory)
+        pass_assets = ['pass.json','icon.png','icon@2x.png','logo.png','logo@2x.png','strip.png','strip@2x.png']
+        Dir[File.join(directory, '*')].select do |i|
+          pass_assets.map{ |e| File.join directory, e }.include? i
+        end
       end
 
       def json_merge(h1, h2)
