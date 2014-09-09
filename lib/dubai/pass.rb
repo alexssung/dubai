@@ -94,7 +94,7 @@ XnMuLyV1FQ==
       end
 
       def get_pass_assets(directory)
-        pass_assets = ['pass.json','icon.png','icon@2x.png','logo.png','logo@2x.png','strip.png','strip@2x.png']
+        pass_assets = ['pass.json','icon.png','icon@2x.png','logo.png','logo@2x.png','strip.png','strip@2x.png','background.png','background@2x.png']
         Dir[File.join(directory, '*')].select do |i|
           pass_assets.map{ |e| File.join directory, e }.include? i
         end
