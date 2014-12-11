@@ -39,14 +39,14 @@ XnMuLyV1FQ==
     end
 
     class Pass
-      attr_reader :pass, :assets
+      attr_accessor :pass
+      attr_reader :assets
 
       TYPES = ['boarding-pass', 'coupon', 'event-ticket', 'store-card', 'generic']
 
-      def initialize(directory, data={})
+      def initialize(directory)
         @assets = get_pass_assets(directory)
-        pass = JSON.parse(File.read(@assets.delete(@assets.detect{|file| File.basename(file) == 'pass.json'})))
-        @pass = json_merge(pass, data)
+        @pass = File.read(@assets.delete(@assets.detect{|file| File.basename(file) == 'pass.json'}))
       end
 
       def manifest
@@ -70,6 +70,21 @@ XnMuLyV1FQ==
             zip.put_next_entry File.basename(file) and zip.print IO.read(file)
           end
         end
+      end
+
+      def set_fields(hash)
+        # set fields in pass.json
+        remerge = proc do |key, v1, v2| 
+          if v1.is_a?(Hash) && v2.is_a?(Hash)
+            v1.merge(v2, &remerge)
+          elsif v1.is_a?(Array) && v2.is_a?(Array)
+            v1.each_with_index { |item, i| item.merge!( v2[i] || {} ) }
+          else
+            v2
+          end
+        end
+        @pass = JSON.parse(@pass).merge(hash, &remerge).to_json
+        self
       end
 
       private
@@ -98,19 +113,6 @@ XnMuLyV1FQ==
         Dir[File.join(directory, '*')].select do |i|
           pass_assets.map{ |e| File.join directory, e }.include? i
         end
-      end
-
-      def json_merge(h1, h2)
-        remerge = proc do |key, v1, v2| 
-          if v1.is_a?(Hash) && v2.is_a?(Hash)
-            v1.merge(v2, &remerge)
-          elsif v1.is_a?(Array) && v2.is_a?(Array)
-            v1.each_with_index { |item, i| item.merge!( v2[i] || {} ) }
-          else
-            v2
-          end
-        end
-        h1.merge(h2, &remerge).to_json
       end
     end
   end
